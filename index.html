@@ -16,7 +16,23 @@
             <div class="jumbotron text-center">
                 <h1>Train from Nowhere* to Somewhere</h1>
             </div>
+            
+            <!-- Current train schedules -->
+            <div class="new border border-primary rounded mb-4">
+                <h5 class="bg-primary p-2">Train Schedule</h5>
+                <div class="row m-2 justify-content-between border-bottom">
+                    <div class="col-2 text-center">Train Name</div>
+                    <div class="col-2 text-center">Destination</div>
+                    <div class="col-2 text-center">Frequency</div>
+                    <div class="col-2 text-center">Next Arrival</div>
+                    <div class="col-2 text-center">Minutes Away</div>
+                </div>  
 
+            <!-- This is where all train schedules go into -->
+                <div id="schedule-display"></div>           
+            </div>
+
+            <!-- Add new train schedule -->
             <div class="new border border-primary rounded">
                 <h5 class="bg-primary p-2">Add A Train Schedule</h5>
                 <form class="m-2">

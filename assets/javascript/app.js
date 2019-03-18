@@ -49,7 +49,8 @@ $(document).ready(function(){
     database.ref().on("child_added", function(snapshot){
         console.log("EVENT: Firebase - child added");
         console.log("Snapshot: ", snapshot);
-        console.log(snapshot.val());
+        console.log("Val:", snapshot.val());
+        postTrainSchedule(snapshot);
     });
 });
 
@@ -105,4 +106,17 @@ function saveToFirebase(){
         ,startTime: newTrainSchedule.startTime
         ,frequency: newTrainSchedule.frequency
     });
+}
+
+function postTrainSchedule(snapshot){
+    if(debug){console.log("Function: postTrainSchedule")}
+
+    var newEntry = `<div class="row m-2 justify-content-between">
+                        <div class="col-2 text-center">${snapshot.val().name}</div>
+                        <div class="col-2 text-center">${snapshot.val().destination}</div>
+                        <div class="col-2 text-center">${snapshot.val().frequency}</div>
+                        <div class="col-2 text-center">Next Arrival</div>
+                        <div class="col-2 text-center">Minutes Away</div>
+                    </div>`;
+    $("#schedule-display").append(newEntry);     
 }
