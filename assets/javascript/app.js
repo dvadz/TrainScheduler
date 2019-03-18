@@ -14,9 +14,24 @@ var trainInfo = {
     ,isTrainInfoComplete: true
 };
 
+// Initialize Firebase
+var config = {
+    apiKey: "AIzaSyDXFPpfiZpX_y1hU9wN0qWmwtlNJoqHHts",
+    authDomain: "dvadz-trainscheduler.firebaseapp.com",
+    databaseURL: "https://dvadz-trainscheduler.firebaseio.com",
+    projectId: "dvadz-trainscheduler",
+    storageBucket: "dvadz-trainscheduler.appspot.com",
+    messagingSenderId: "42799066100"
+};
+
+firebase.initializeApp(config);
+var database = firebase.database();
+
+// EVENT handlers
 $(document).ready(function(){
     console.log("document is ready");
 
+    //SUBMIT
     $("#submit").on("click", function(){
         if(debug){console.log("EVENT: Clicked to submit a new train schedule")}
         event.preventDefault();
@@ -26,23 +41,26 @@ $(document).ready(function(){
         newTrainSchedule.startTime = $("#start-input").val();
         newTrainSchedule.frequency = $("#frequency-input").val();
 
-        if(debug){console.log(newTrainSchedule)}
+        if(debug){console.log("New train schedule pulled from the form", newTrainSchedule)}
         AddNewTrainSchedule();
+    });
+
+    //FIREBASE child added
+    database.ref().on("child_added", function(snapshot){
+        console.log("EVENT: Firebase - child added");
+        console.log("Snapshot: ", snapshot);
+        console.log(snapshot.val());
     });
 });
 
-
 function AddNewTrainSchedule() {
     if(debug){console.log("Function: AddNewTrainSchedule ")}
-    // TODO:qualify that all required are correct before proceeding
     checkIfTrainScheduleIsValid();
-    // TODO: show an message if there is an error with any of the inputs
-    // TODO: clear the form if all info are correct, clear error message, reset all text colors to black
-
-    // TODO: push this new train schedule to your array of train schedules
-    // TODO: save the array to firebase
-    // TODO: retrieve array from firebase using realtime feedback
-    // TODO: calculate and refresh current train schedules
+    if(trainInfo.isTrainInfoComplete===false) {
+        if(debug){console.log("New train schedule is NOT complete")}
+        return false;
+    }    
+    saveToFirebase();
 }
 
 function checkIfTrainScheduleIsValid(){
@@ -76,4 +94,15 @@ function checkIfTrainScheduleIsValid(){
         $("#error-messages").append(errorMessage);
         trainInfo.isTrainInfoComplete = false;
     }
+}
+
+function saveToFirebase(){
+    if(debug){console.log("Function: savedToFirebase ")}
+
+    database.ref().push({
+         name: newTrainSchedule.name        
+        ,destination: newTrainSchedule.destination
+        ,startTime: newTrainSchedule.startTime
+        ,frequency: newTrainSchedule.frequency
+    });
 }
