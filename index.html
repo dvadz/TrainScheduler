@@ -19,13 +19,13 @@
 <body>
         <div class="container">
             <div class="jumbotron text-center">
-                <h1>Train from Nowhere* to Somewhere</h1>
+                <h1>Trains from Here to There</h1>
             </div>
             
             <!-- Current train schedules -->
             <div class="new border border-primary rounded mb-4">
                 <h5 class="bg-primary p-2">Train Schedule</h5>
-                <div class="row m-2 justify-content-between border-bottom font-weight-bold">
+                <div class="header row m-2 justify-content-between border-bottom font-weight-bold">
                     <div class="col-2 text-center">Train Name</div>
                     <div class="col-2 text-center">Destination</div>
                     <div class="col-2 text-center">Frequency</div>
@@ -42,22 +42,25 @@
                 <h5 class="bg-primary p-2">Add A Train Schedule</h5>
                 <form class="m-2">
                     <div class="form-group">
-                        <label for="">Train Name</label>
+                        <label>Train Name</label>
                         <input id="name-input" class="form-control" type="text">
                     </div>
                     <div class="form-group">
-                        <label for="">Destination</label>
+                        <label>Destination</label>
                         <input id="destination-input" class="form-control" type="text">
                     </div>
                     <div class="form-group">
-                        <label for="">First Train Time</label>
-                        <input id="start-input" class="form-control" type="time">
+                        <label>First Train Time (24H format)</label>
+                        <div class="form-control">
+                            <input id="start-hour-input" class="hours" type="number" min="0" max="23" placeholder="00">:
+                            <input id="start-minute-input" class="minutes" type="number" min="0" max="59" placeholder="00">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="">Frequency in Minutes</label>
-                        <input id="frequency-input" class="form-control" type="number">
+                        <label>Frequency in Minutes</label>
+                        <input id="frequency-input" class="form-control" type="number" min="1">
                     </div>
-                    <input id="submit" class="btn btn-outline-primary" type="button" value="Submit">
+                    <input id="submit" class="btn btn-outline-primary" type="submit">
                     <div id="error-messages" class="text-danger"></div>
                 </form>
             </div>

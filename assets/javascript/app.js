@@ -47,7 +47,7 @@ $(document).ready(function(){
     database.ref().on("child_added", function(snapshot){
         console.log("EVENT: Firebase - child added");
         console.log("Snapshot: ", snapshot);
-        // TODO: kill the 1 minute interval
+        //kill the 1 minute interval 
         stopOneMinuteInterval();
         //store the snapshot values into the holding object for eventual array storage
         var scheduleFromFirebase = snapshot.val();
@@ -58,7 +58,7 @@ $(document).ready(function(){
         if(debug){console.log(scheduleFromFirebase);}
         trainInfo.list.push(scheduleFromFirebase);
         postThisSchedule(trainInfo.list.length - 1);
-        // TODO: restart the 1 minute interval to refresh train arrivals
+        //restart the 1 minute interval to refresh train arrivals
         startOneMinuteInterval();
     });
 });
@@ -80,7 +80,7 @@ function retrieveTrainInfoFromTheForm(){
     //retrieve all info
     newTrainSchedule.name = $("#name-input").val().trim().toLowerCase();
     newTrainSchedule.destination = $("#destination-input").val().trim().toLowerCase();
-    newTrainSchedule.startTimeInMinutes = convert_HHMM_ToMinutes($("#start-input").val());
+    newTrainSchedule.startTimeInMinutes = convert_HHMM_ToMinutes($("#start-hour-input").val() + ":" + $("#start-minute-input").val() );
     newTrainSchedule.frequency = parseInt($("#frequency-input").val());
 }
 
@@ -88,7 +88,8 @@ function clearTheForm(){
     if(debug){console.log("Function: clearTheForm")}
     $("#name-input").val("");
     $("#destination-input").val("");
-    $("#start-input").val("");
+    $("#start-hour-input").val("");
+    $("#start-minute-input").val("");
     $("#frequency-input").val("");
 }
 
@@ -110,19 +111,19 @@ function checkIfTrainScheduleIsValid(){
         trainInfo.isTrainInfoComplete = false;
     }
     //destination must be at least 3 characters 
-    if(newTrainSchedule.destination<3){
+    if(newTrainSchedule.destination.length<3){
         errorMessage = $("<p></p>").text('"Destinaton" must have at least 3 characters');
         $("#error-messages").append(errorMessage);
         trainInfo.isTrainInfoComplete = false;
     }
     //start time must be provided
-    if(newTrainSchedule.startTime===""){
+    if(isNaN(newTrainSchedule.startTimeInMinutes)){
         errorMessage = $("<p></p>").text('"First Train Time" must be provided');
         $("#error-messages").append(errorMessage);
         trainInfo.isTrainInfoComplete = false;
     }
     //frequency must be provided
-    if(newTrainSchedule.frequency===""){
+    if(isNaN(newTrainSchedule.frequency)){
         errorMessage = $("<p></p>").text('"Frequency" must be provided');
         $("#error-messages").append(errorMessage);
         trainInfo.isTrainInfoComplete = false;
@@ -173,31 +174,42 @@ function calculateNextArrivalTime(arrayIndex){
 
     //get the following from the object
     //startTimeInMinutes, arrivalTimeInMinutes, frequency
-    var startTimeInMinutes = trainInfo.list[arrayIndex].startTimeInMinutes;
-    var arrivalTimeInMinutes = trainInfo.list[arrayIndex].arrivalTimeInMinutes;
+    var startTimeInMinutes = parseInt(trainInfo.list[arrayIndex].startTimeInMinutes);
+    var arrivalTimeInMinutes = parseInt(trainInfo.list[arrayIndex].arrivalTimeInMinutes);
     var frequency = parseInt(trainInfo.list[arrayIndex].frequency);
 
     //get the CURRENT time in minutes
     var currentTimeInMinutes = (moment().hour()*60) + (moment().minute());
     
+    // this is test code to fake the TOD   -----------------------------
+    // var hours = $("#start-hour-input").val();
+    // var minutes = $("#start-minute-input").val();
+    // console.log(`hour: ${hours}  minutes ${minutes}`);
+    // var currentTimeInMinutes = (parseInt(hours)*60) + parseInt(minutes);
+    // =================================================================
+
     if(debug){console.log("currentTimeInMinutes: ", currentTimeInMinutes);}
     if(debug){console.log("startTimeInMinutes: ", startTimeInMinutes);}
     if(debug){console.log("arrivalTimeInMinutes: ", arrivalTimeInMinutes);}
     if(debug){console.log("Freq:", typeof frequency, frequency)}
 
+    //calculate the next arrival time
     if(arrivalTimeInMinutes<currentTimeInMinutes){
         if(debug){console.log("1st scenario")}
             do {
                 arrivalTimeInMinutes += frequency;
             } while(arrivalTimeInMinutes<currentTimeInMinutes)
     }
+    // WARNING: Don't change the sequence below
+    //calculate and save minutesAway
+    trainInfo.list[arrayIndex].minutesAway = arrivalTimeInMinutes - currentTimeInMinutes;
+    // check if arrival time is past midnight
+    if(arrivalTimeInMinutes>=1440) {
+        arrivalTimeInMinutes -= 1440;
+    }
     if(debug){console.log("NEW arrivalTimeInMinutes: ", arrivalTimeInMinutes);}
-
     //save arrivaltime
     trainInfo.list[arrayIndex].arrivalTimeInMinutes = arrivalTimeInMinutes;
-    //save minutesAway
-    trainInfo.list[arrayIndex].minutesAway = arrivalTimeInMinutes - currentTimeInMinutes;
-
 }
 
 function convert_HHMM_ToMinutes(timeHHMM){

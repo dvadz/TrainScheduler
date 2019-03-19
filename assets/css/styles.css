@@ -1,6 +1,12 @@
-.train:nth-child(odd) {
+.train:nth-child(even) {
     background-color: gainsboro;
 }
-.train:nth-child(even) {
+.train:nth-child(odd) {
     background-color: rgb(197, 219, 247);
+}
+.hours, .minutes {
+    border: none;
+}
+.header {
+    background-color: rgb(53, 112, 240);
 }
