@@ -40,28 +40,30 @@
             <!-- Add new train schedule -->
             <div class="new border border-primary rounded mb-4">
                 <h5 class="bg-primary p-2">Add A Train Schedule</h5>
-                <form class="m-2">
-                    <div class="form-group">
+                <form class="m-2 row">
+                    <div class="form-group col-12 col-sm-6">
                         <label>Train Name</label>
                         <input id="name-input" class="form-control" type="text">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group col-12 col-sm-6">
                         <label>Destination</label>
                         <input id="destination-input" class="form-control" type="text">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group col-12 col-sm-6">
                         <label>First Train Time (24H format)</label>
-                        <div class="form-control">
+                        <div class="form-control pt-1">
                             <input id="start-hour-input" class="hours" type="number" min="0" max="23" placeholder="00">:
                             <input id="start-minute-input" class="minutes" type="number" min="0" max="59" placeholder="00">
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group col-12 col-sm-6">
                         <label>Frequency in Minutes</label>
                         <input id="frequency-input" class="form-control" type="number" min="1">
                     </div>
-                    <input id="submit" class="btn btn-outline-primary" type="submit">
-                    <div id="error-messages" class="text-danger"></div>
+                    <div class="form-group col-12">
+                        <input id="submit" class="btn btn-outline-primary" type="submit">
+                    </div>
+                    <div id="error-messages" class="text-danger col-12"></div>
                 </form>
             </div>
         </div>
