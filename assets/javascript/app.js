@@ -159,11 +159,11 @@ function postThisSchedule(arrayIndex){
     }
 
     var newEntry = `<div class="row m-2 justify-content-between train">
-                        <div class="col-2 text-center">${name}</div>
-                        <div class="col-2 text-center">${destination}</div>
-                        <div class="col-2 text-center">${frequency}</div>
-                        <div class="col-2 text-center">${arrivalTimeInHHMM}</div>
-                        <div class="col-2 text-center">${minutesAway}</div>
+                        <div class="col-4 col-sm-2 text-center">${name}</div>
+                        <div class="col-4 col-sm-2 text-center"">${destination}</div>
+                        <div class="d-none d-sm-block col-sm-2 text-center">${frequency}</div>
+                        <div class="col-4 col-sm-2 text-center">${arrivalTimeInHHMM}</div>
+                        <div class="d-none d-md-block col-md-2 text-center">${minutesAway}</div>
                     </div>`;
     //append to the div                
     $("#schedule-display").append(newEntry);     
