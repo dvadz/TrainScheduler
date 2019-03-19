@@ -45,8 +45,8 @@ $(document).ready(function(){
     //firebase sends all children when the app is started/refreshed
     //then firebase sends back only the child that was recently added
     database.ref().on("child_added", function(snapshot){
-        console.log("EVENT: Firebase - child added");
-        console.log("Snapshot: ", snapshot);
+        if(debug){console.log("EVENT: Firebase - child added");}
+        if(debug){console.log("Snapshot: ", snapshot);}
         //kill the 1 minute interval 
         stopOneMinuteInterval();
         //store the snapshot values into the holding object for eventual array storage
@@ -240,7 +240,7 @@ function updateTrainArrivals(){
     clearAllSchedules();
     //update all trains schedules
     trainInfo.list.forEach(function(train,index){
-        console.log(train, index)
+        if(debug){console.log(train, index)}
         postThisSchedule(index);
     });
 }
