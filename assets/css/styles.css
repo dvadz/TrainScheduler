@@ -1,0 +1,6 @@
+.train:nth-child(odd) {
+    background-color: gainsboro;
+}
+.train:nth-child(even) {
+    background-color: rgb(197, 219, 247);
+}
