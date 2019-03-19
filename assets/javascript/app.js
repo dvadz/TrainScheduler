@@ -1,11 +1,12 @@
 'use strict'
 
 var debug = true;
+var updateInterval;
 
 var newTrainSchedule = {
      name: ""
     ,destination: ""
-    ,startTime: 0
+    ,startTimeInMinutes: 0
     ,frequency: 0
 };
 
@@ -27,7 +28,7 @@ var config = {
 firebase.initializeApp(config);
 var database = firebase.database();
 
-// EVENT handlers
+// EVENT handlers -----------------------------------------------------------
 $(document).ready(function(){
     console.log("document is ready");
 
@@ -35,33 +36,64 @@ $(document).ready(function(){
     $("#submit").on("click", function(){
         if(debug){console.log("EVENT: Clicked to submit a new train schedule")}
         event.preventDefault();
-
-        newTrainSchedule.name = $("#name-input").val().trim().toLowerCase();
-        newTrainSchedule.destination = $("#destination-input").val().trim().toLowerCase();
-        newTrainSchedule.startTime = $("#start-input").val();
-        newTrainSchedule.frequency = $("#frequency-input").val();
-
+        retrieveTrainInfoFromTheForm();
         if(debug){console.log("New train schedule pulled from the form", newTrainSchedule)}
         AddNewTrainSchedule();
     });
 
     //FIREBASE child added
+    //firebase sends all children when the app is started/refreshed
+    //then firebase sends back only the child that was recently added
     database.ref().on("child_added", function(snapshot){
         console.log("EVENT: Firebase - child added");
         console.log("Snapshot: ", snapshot);
-        console.log("Val:", snapshot.val());
-        postTrainSchedule(snapshot);
+        // TODO: kill the 1 minute interval
+        stopOneMinuteInterval();
+        //store the snapshot values into the holding object for eventual array storage
+        var scheduleFromFirebase = snapshot.val();
+        //insert a new key > set the initial: arrival = start
+        scheduleFromFirebase.arrivalTimeInMinutes = scheduleFromFirebase.startTimeInMinutes;
+        //insert a new key > minutesAway
+        scheduleFromFirebase.minutesAway = 0;
+        if(debug){console.log(scheduleFromFirebase);}
+        trainInfo.list.push(scheduleFromFirebase);
+        postThisSchedule(trainInfo.list.length - 1);
+        // TODO: restart the 1 minute interval to refresh train arrivals
+        startOneMinuteInterval();
     });
 });
 
 function AddNewTrainSchedule() {
-    if(debug){console.log("Function: AddNewTrainSchedule ")}
+    if(debug){console.log("Function: AddNewTrainSchedule", newTrainSchedule)}
     checkIfTrainScheduleIsValid();
     if(trainInfo.isTrainInfoComplete===false) {
         if(debug){console.log("New train schedule is NOT complete")}
         return false;
-    }    
+    }   
+    clearTheForm();
+    if(debug){console.log(newTrainSchedule);}
     saveToFirebase();
+}
+
+function retrieveTrainInfoFromTheForm(){
+    if(debug){console.log("Function: retrieveTrainInfoFromTheForm")}
+    //retrieve all info
+    newTrainSchedule.name = $("#name-input").val().trim().toLowerCase();
+    newTrainSchedule.destination = $("#destination-input").val().trim().toLowerCase();
+    newTrainSchedule.startTimeInMinutes = convert_HHMM_ToMinutes($("#start-input").val());
+    newTrainSchedule.frequency = parseInt($("#frequency-input").val());
+}
+
+function clearTheForm(){
+    if(debug){console.log("Function: clearTheForm")}
+    $("#name-input").val("");
+    $("#destination-input").val("");
+    $("#start-input").val("");
+    $("#frequency-input").val("");
+}
+
+function clearAllSchedules(){
+    $("#schedule-display").empty();     
 }
 
 function checkIfTrainScheduleIsValid(){
@@ -103,20 +135,110 @@ function saveToFirebase(){
     database.ref().push({
          name: newTrainSchedule.name        
         ,destination: newTrainSchedule.destination
-        ,startTime: newTrainSchedule.startTime
+        ,startTimeInMinutes: newTrainSchedule.startTimeInMinutes
         ,frequency: newTrainSchedule.frequency
+        ,dateAdded: firebase.database.ServerValue.TIMESTAMP
     });
 }
 
-function postTrainSchedule(snapshot){
-    if(debug){console.log("Function: postTrainSchedule")}
+function postThisSchedule(arrayIndex){
+    if(debug){console.log("Function: postThisSchedule")}
+    
+    var name, destination, frequency, arrivalTimeInHHMM, minutesAway;
+    calculateNextArrivalTime(arrayIndex);
+    //convert arrival time to HH:MM
 
-    var newEntry = `<div class="row m-2 justify-content-between">
-                        <div class="col-2 text-center">${snapshot.val().name}</div>
-                        <div class="col-2 text-center">${snapshot.val().destination}</div>
-                        <div class="col-2 text-center">${snapshot.val().frequency}</div>
-                        <div class="col-2 text-center">Next Arrival</div>
-                        <div class="col-2 text-center">Minutes Away</div>
+    name = trainInfo.list[arrayIndex].name;
+    destination = trainInfo.list[arrayIndex].destination;
+    frequency = trainInfo.list[arrayIndex].frequency;
+    arrivalTimeInHHMM = convert_Minutes_ToHHMM(trainInfo.list[arrayIndex].arrivalTimeInMinutes);
+    minutesAway = trainInfo.list[arrayIndex].minutesAway;
+    if(minutesAway===0) {
+        arrivalTimeInHHMM = "Arrived";
+    }
+
+    var newEntry = `<div class="row m-2 justify-content-between train">
+                        <div class="col-2 text-center">${name}</div>
+                        <div class="col-2 text-center">${destination}</div>
+                        <div class="col-2 text-center">${frequency}</div>
+                        <div class="col-2 text-center">${arrivalTimeInHHMM}</div>
+                        <div class="col-2 text-center">${minutesAway}</div>
                     </div>`;
+    //append to the div                
     $("#schedule-display").append(newEntry);     
+}
+
+function calculateNextArrivalTime(arrayIndex){
+    if(debug){console.log("Function: calculateNextArrivalTime");}
+
+    //get the following from the object
+    //startTimeInMinutes, arrivalTimeInMinutes, frequency
+    var startTimeInMinutes = trainInfo.list[arrayIndex].startTimeInMinutes;
+    var arrivalTimeInMinutes = trainInfo.list[arrayIndex].arrivalTimeInMinutes;
+    var frequency = parseInt(trainInfo.list[arrayIndex].frequency);
+
+    //get the CURRENT time in minutes
+    var currentTimeInMinutes = (moment().hour()*60) + (moment().minute());
+    
+    if(debug){console.log("currentTimeInMinutes: ", currentTimeInMinutes);}
+    if(debug){console.log("startTimeInMinutes: ", startTimeInMinutes);}
+    if(debug){console.log("arrivalTimeInMinutes: ", arrivalTimeInMinutes);}
+    if(debug){console.log("Freq:", typeof frequency, frequency)}
+
+    if(arrivalTimeInMinutes<currentTimeInMinutes){
+        if(debug){console.log("1st scenario")}
+            do {
+                arrivalTimeInMinutes += frequency;
+            } while(arrivalTimeInMinutes<currentTimeInMinutes)
+    }
+    if(debug){console.log("NEW arrivalTimeInMinutes: ", arrivalTimeInMinutes);}
+
+    //save arrivaltime
+    trainInfo.list[arrayIndex].arrivalTimeInMinutes = arrivalTimeInMinutes;
+    //save minutesAway
+    trainInfo.list[arrayIndex].minutesAway = arrivalTimeInMinutes - currentTimeInMinutes;
+
+}
+
+function convert_HHMM_ToMinutes(timeHHMM){
+    var time = timeHHMM.split(':');
+    var timeInMinutes = (parseInt(time[0])*60) + parseInt(time[1]);
+
+    return timeInMinutes;
+}
+
+function convert_Minutes_ToHHMM(timeInMinutes) {
+    
+    var hours = Math.floor(timeInMinutes/60);
+    var minutes = timeInMinutes%60;
+
+    if(hours<10) {
+        hours = '0' + hours;
+    }
+    if(minutes<10) {
+        minutes = '0' + minutes;
+    }
+
+    return `${hours}:${minutes}`;
+}
+
+function updateTrainArrivals(){
+    if(debug){console.log("Refreshing the train schedules")}
+    
+    clearAllSchedules();
+    //update all trains schedules
+    trainInfo.list.forEach(function(train,index){
+        console.log(train, index)
+        postThisSchedule(index);
+    });
+}
+
+function startOneMinuteInterval(){
+    if(debug){console.log("STARTED the interval")}
+    updateInterval = setInterval(updateTrainArrivals, 60000);
+}
+
+function stopOneMinuteInterval(){
+    if(debug){console.log("STOPPED the interval")}
+    clearInterval(updateInterval);
 }
